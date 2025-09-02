@@ -1,0 +1,321 @@
+import org.opensourcephysics.controls.AbstractSimulation;
+import org.opensourcephysics.controls.SimulationControl;
+import org.opensourcephysics.display.Drawable;
+import org.opensourcephysics.display.DrawableShape;
+import org.opensourcephysics.display.DrawableTextLine;
+import org.opensourcephysics.display.Trail;
+import org.opensourcephysics.frames.PlotFrame;
+
+
+
+
+
+
+
+
+public class RiemannSumsApp extends AbstractSimulation {
+PlotFrame plotFrame = new PlotFrame("x", "f(x)", "Riemann Sums");
+double a = 2;
+double b = 1;
+double c = 0;  
+double xMin = 0;
+double xMax = 50;
+int steps = 100;
+double yMax = 1200;
+
+
+
+
+
+
+
+
+String rule;
+boolean plotted = false;
+double area = 0;
+
+
+//Set values here
+@Override
+public void reset() {
+    control.setValue("Size", 1000);
+    control.setValue("Range", 25);
+    control.setValue("Coeff x^2", 2);
+    control.setValue("Coeff x", 1);
+    control.setValue("Constant", 0);
+    control.setValue("Rule (Mid, Left, Right, Trap)", "Mid");
+    control.setValue("Y Max", 200);
+}
+
+
+
+
+
+
+@Override
+public void initialize() {
+    // Clear and configure the plot frame
+    plotFrame.clearData();
+    plotFrame.clearDrawables();
+    plotFrame.setConnected(true);
+    plotFrame.setSize(300, 300);
+    plotFrame.setDefaultCloseOperation(3);
+    plotFrame.setVisible(true);
+
+
+    // get values from the control panel
+    a = control.getDouble("Coeff x^2");
+    b = control.getDouble("Coeff x");
+    c = control.getDouble("Constant");
+    xMin = 0;
+    xMax = 50;
+    double yMax = control.getDouble("Y Max");
+    rule = control.getString("Rule (Mid, Left, Right, Trap)");
+
+
+    // Variable f(x)
+    double maxFx = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i <= steps; i++) {
+        double x = xMin + i * (xMax - xMin) / steps;
+        double y = a * x * x + b * x + c;
+        maxFx = Math.max(maxFx, y);
+        plotFrame.append(0, x, y);
+    }
+
+
+    // Changes axis limits
+    plotFrame.setPreferredMinMax(xMin, xMax, 0, Math.max(yMax, maxFx + 10));
+
+
+    if (rule. equals ("Mid")) {
+        plotMidRule();
+    } else if (rule.equals("Left")) {
+        plotLeftRule();
+    } else if (rule.equals("Right")) {
+        plotRightRule();
+    } else if (rule.equals("Trap")) {
+        plotTrapRule();
+    } else {
+        control.println("error");
+    }
+
+
+}
+
+
+
+
+@Override
+protected void doStep() {
+}
+
+
+
+
+
+
+
+
+private void plotMidRule() {
+    double dx = (xMax - xMin) / steps;
+    area = 0;
+
+
+    for (int i = 0; i < steps; i++) {
+        double left = xMin + i * dx;
+        double midpoint = left + dx / 2;
+        double height = a * midpoint * midpoint + b * midpoint + c;
+        area += height * dx;
+       
+       
+     // Midpoint rectangle
+        DrawableShape rect = DrawableShape.createRectangle(midpoint, height / 2, dx, height);
+        rect.setMarkerColor(java.awt.Color.RED, java.awt.Color.RED);
+        plotFrame.addDrawable(rect);
+    }
+    //area display
+    DrawableTextLine areaText = new DrawableTextLine(
+        "Area (Midpoint Rule): " + String.format("%.4f", area),
+        xMin + 1, yMax - 15  
+    );
+    areaText.setColor(java.awt.Color.BLUE);
+    plotFrame.addDrawable(areaText);
+}
+
+
+
+
+
+
+
+
+private void plotLeftRule() {
+    double dx = (xMax - xMin) / steps;
+    area = 0;
+
+
+    for (int i = 0; i < steps; i++) {
+        double xLeft = xMin + i * dx;
+        double height = a * xLeft * xLeft + b * xLeft + c;
+        double rectArea = height * dx;
+        area += rectArea;
+
+
+    // Draw rectangle using left point
+        DrawableShape rect = DrawableShape.createRectangle(xLeft + dx / 2, height / 2, dx, height);
+        rect.setMarkerColor(java.awt.Color.RED, java.awt.Color.RED);
+        plotFrame.addDrawable(rect);
+    }
+
+
+    DrawableTextLine areaText = new DrawableTextLine(
+        "Area (Left Rule): " + String.format("%.4f", area),
+        xMin + 1, yMax - 30
+    );
+    areaText.setColor(java.awt.Color.GREEN.darker());
+    plotFrame.addDrawable(areaText);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+private void plotRightRule() {
+    double dx = (xMax - xMin) / steps;
+    area = 0;
+
+
+    for (int i = 1; i <= steps; i++) {
+        double xRight = xMin + i * dx;
+        double height = a * xRight * xRight + b * xRight + c;
+        double rectArea = height * dx;
+        area += rectArea;
+
+
+    // Draw rectangle using right point
+        DrawableShape rect = DrawableShape.createRectangle(xRight - dx / 2, height / 2, dx, height);
+        rect.setMarkerColor(java.awt.Color.MAGENTA, java.awt.Color.MAGENTA);
+        plotFrame.addDrawable(rect);
+    }
+
+
+    DrawableTextLine areaText = new DrawableTextLine(
+        "Area (Right Rule): " + String.format("%.4f", area),
+        xMin + 1, yMax - 45
+    );
+    areaText.setColor(java.awt.Color.MAGENTA.darker());
+    plotFrame.addDrawable(areaText);
+
+
+
+
+
+
+}
+
+
+
+
+private void plotTrapRule() {
+     double dx = (xMax - xMin) / steps;
+    area = 0;
+
+
+    for (int i = 0; i < steps; i++) {
+        double x0 = xMin + i * dx;
+        double x1 = x0 + dx;
+
+
+        double y0 = a * x0 * x0 + b * x0 + c;
+        double y1 = a * x1 * x1 + b * x1 + c;
+
+
+        // Trapezoid area
+        double trapezoidArea = (y0 + y1) / 2 * dx;
+        area += trapezoidArea;
+
+
+        // drawing trapezoid
+        Trail t = new Trail();
+        t.setStrokeColor(java.awt.Color.RED);
+        t.addPoint(x0, 0);
+        t.addPoint(x0, y0);
+        t.addPoint(x1, y1);
+        t.addPoint(x1, 0);
+        t.addPoint(x0, 0);
+
+
+        plotFrame.addDrawable(t);
+    }
+
+
+    DrawableTextLine areaText = new DrawableTextLine(
+        "Area (Trapezoid Rule): " + String.format("%.4f", area),
+        xMin + 1, yMax - 60
+    );
+    areaText.setColor(java.awt.Color.RED);
+    plotFrame.addDrawable(areaText);
+}
+
+
+private void plotMinimumRule() {
+    double dx = (xMax - xMin) / steps;
+    area = 0;
+
+
+    for (int i = 0; i < steps; i++) {
+        double xLeft = xMin + i * dx;
+        double xRight = xLeft + dx;
+
+
+        double yLeft = a * xLeft * xLeft + b * xLeft + c;
+        double yRight = a * xRight * xRight + b * xRight + c;
+
+
+        double height = Math.min(yLeft, yRight);
+        area += height * dx;
+
+
+        // Draw rectangle using minimum value
+        DrawableShape rect = DrawableShape.createRectangle(xLeft + dx / 2, height / 2, dx, height);
+        rect.setMarkerColor(java.awt.Color.ORANGE, java.awt.Color.ORANGE);
+        plotFrame.addDrawable(rect);
+    }
+
+
+    DrawableTextLine areaText = new DrawableTextLine(
+        "Area (Minimum Rule): " + String.format("%.4f", area),
+        xMin + 1, yMax - 75
+    );
+    areaText.setColor(java.awt.Color.ORANGE.darker());
+    plotFrame.addDrawable(areaText);
+}
+
+
+
+
+/**
+ * Required main method, runs the simulation.
+ * @param args
+ */
+public static void main(String[] args) {
+    System.out.println("Starting the simulation...");
+    SimulationControl.createApp(new RiemannSumsApp());
+}
+}
+
+
+
+
+
+
+
